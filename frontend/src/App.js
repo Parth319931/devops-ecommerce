@@ -17,11 +17,16 @@ function App() {
   const search = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${API}/api/search`, { params: { q: query, ...filters } });
-      setProducts(res.data);
+      const res = await axios.get(`${API}/api/search`, {
+        params: { q: query, ...filters }
+      });
+
+      setProducts(res?.data || []);   // ✅ SAFE
     } catch (e) {
       console.error(e);
+      setProducts([]);                // ✅ fallback
     }
+
     setLoading(false);
   };
 
