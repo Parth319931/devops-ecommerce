@@ -69,14 +69,18 @@ pipeline {
                     passwordVariable: 'DOCKER_PASS'
                 )]) {
                     sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
-                    sh "docker build -f Dockerfile.backend -t ${IMAGE_NAME}-backend:${IMAGE_TAG} ."
-                    sh "docker build -f Dockerfile.frontend -t ${IMAGE_NAME}-frontend:${IMAGE_TAG} ."
-                    sh "docker push ${IMAGE_NAME}-backend:${IMAGE_TAG}"
-                    sh "docker push ${IMAGE_NAME}-frontend:${IMAGE_TAG}"
-                    sh "docker tag ${IMAGE_NAME}-backend:${IMAGE_TAG} ${IMAGE_NAME}-backend:latest"
-                    sh "docker tag ${IMAGE_NAME}-frontend:${IMAGE_TAG} ${IMAGE_NAME}-frontend:latest"
-                    sh "docker push ${IMAGE_NAME}-backend:latest"
-                    sh "docker push ${IMAGE_NAME}-frontend:latest"
+
+                    sh "docker build -f Dockerfile.backend -t ${DOCKERHUB_USER}/ecommerce-app-backend:${BUILD_NUMBER} ."
+                    sh "docker build -f Dockerfile.frontend -t ${DOCKERHUB_USER}/ecommerce-app-frontend:${BUILD_NUMBER} ."
+
+                    sh "docker push ${DOCKERHUB_USER}/ecommerce-app-backend:${BUILD_NUMBER}"
+                    sh "docker push ${DOCKERHUB_USER}/ecommerce-app-frontend:${BUILD_NUMBER}"
+
+                    sh "docker tag ${DOCKERHUB_USER}/ecommerce-app-backend:${BUILD_NUMBER} ${DOCKERHUB_USER}/ecommerce-app-backend:latest"
+                    sh "docker tag ${DOCKERHUB_USER}/ecommerce-app-frontend:${BUILD_NUMBER} ${DOCKERHUB_USER}/ecommerce-app-frontend:latest"
+
+                    sh "docker push ${DOCKERHUB_USER}/ecommerce-app-backend:latest"
+                    sh "docker push ${DOCKERHUB_USER}/ecommerce-app-frontend:latest"
                 }
             }
         }
