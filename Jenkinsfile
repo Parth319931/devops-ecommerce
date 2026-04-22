@@ -9,7 +9,7 @@ pipeline {
 
     tools {
         nodejs 'NodeJS18'
-        dependencyCheck 'OWASP-DC'
+        dependency-check 'OWASP-DC'
     }
 
     stages {
