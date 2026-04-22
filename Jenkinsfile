@@ -2,13 +2,9 @@ pipeline {
     agent any
 
     environment {
-        DOCKERHUB_USER = 'parthgandhi23'
+        DOCKERHUB_USER = 'YOUR_DOCKERHUB_USERNAME'
         IMAGE_NAME = "${DOCKERHUB_USER}/ecommerce-app"
         IMAGE_TAG = "${BUILD_NUMBER}"
-    }
-
-    tools {
-        nodejs 'NodeJS18'
     }
 
     stages {
@@ -61,15 +57,7 @@ pipeline {
 
         stage('Security Scan') {
             steps {
-                dependencyCheck additionalArguments: '''
-                    --scan backend/requirements.txt
-                    --scan frontend/package.json
-                    --format HTML
-                    --format XML
-                    --out reports/
-                ''', odcInstallation: 'OWASP-DC'
-
-                dependencyCheckPublisher pattern: 'reports/dependency-check-report.xml'
+                echo 'Security Scan - OWASP Dependency-Check will be configured in Phase 5'
             }
         }
 
@@ -96,23 +84,6 @@ pipeline {
         stage('Deploy') {
             steps {
                 echo 'Deploy stage - will be activated in Phase 3 (Terraform + Ansible)'
-                // Terraform and Ansible steps will go here in Phase 3
-                // withCredentials([
-                //     string(credentialsId: 'aws-access-key-id', variable: 'AWS_ACCESS_KEY_ID'),
-                //     string(credentialsId: 'aws-secret-access-key', variable: 'AWS_SECRET_ACCESS_KEY')
-                // ]) {
-                //     sh '''
-                //         cd infra/terraform
-                //         terraform init
-                //         terraform apply -auto-approve
-                //         terraform output -json > ../ansible/inventory.json
-                //     '''
-                //     sh '''
-                //         cd infra/ansible
-                //         python3 generate_inventory.py
-                //         ansible-playbook -i inventory.ini site.yml
-                //     '''
-                // }
             }
         }
     }
@@ -123,7 +94,7 @@ pipeline {
             echo 'Pipeline completed.'
         }
         success {
-            echo 'All stages passed. Application deployed successfully!'
+            echo 'All stages passed!'
         }
         failure {
             echo 'Pipeline failed. Check logs above.'
