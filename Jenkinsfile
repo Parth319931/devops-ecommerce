@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKERHUB_USER = 'parthgandhi123'
+        DOCKERHUB_USER = 'parthgandhi23'
         IMAGE_NAME = "${DOCKERHUB_USER}/ecommerce-app"
         IMAGE_TAG = "${BUILD_NUMBER}"
     }
