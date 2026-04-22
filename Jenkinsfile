@@ -95,22 +95,24 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                withCredentials([
-                    string(credentialsId: 'aws-access-key-id', variable: 'AWS_ACCESS_KEY_ID'),
-                    string(credentialsId: 'aws-secret-access-key', variable: 'AWS_SECRET_ACCESS_KEY')
-                ]) {
-                    sh '''
-                        cd infra/terraform
-                        terraform init
-                        terraform apply -auto-approve
-                        terraform output -json > ../ansible/inventory.json
-                    '''
-                    sh '''
-                        cd infra/ansible
-                        python3 generate_inventory.py
-                        ansible-playbook -i inventory.ini site.yml
-                    '''
-                }
+                echo 'Deploy stage - will be activated in Phase 3 (Terraform + Ansible)'
+                // Terraform and Ansible steps will go here in Phase 3
+                // withCredentials([
+                //     string(credentialsId: 'aws-access-key-id', variable: 'AWS_ACCESS_KEY_ID'),
+                //     string(credentialsId: 'aws-secret-access-key', variable: 'AWS_SECRET_ACCESS_KEY')
+                // ]) {
+                //     sh '''
+                //         cd infra/terraform
+                //         terraform init
+                //         terraform apply -auto-approve
+                //         terraform output -json > ../ansible/inventory.json
+                //     '''
+                //     sh '''
+                //         cd infra/ansible
+                //         python3 generate_inventory.py
+                //         ansible-playbook -i inventory.ini site.yml
+                //     '''
+                // }
             }
         }
     }
