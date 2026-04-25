@@ -1,0 +1,9 @@
+---
+- name: Configure and deploy ecommerce app
+  hosts: app_servers
+  become: yes
+
+  roles:
+    - base
+    - security
+    - app

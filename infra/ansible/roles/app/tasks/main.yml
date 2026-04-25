@@ -1,0 +1,21 @@
+- name: Create app directory
+  file:
+    path: /opt/ecommerce
+    state: directory
+    mode: '0755'
+
+- name: Copy docker-compose file to server
+  copy:
+    src: "/mnt/c/Users/sagar/OneDrive/Documents/Devops_Project/devops-ecommerce/docker-compose.yml"
+    dest: /opt/ecommerce/docker-compose.yml
+
+- name: Pull backend image from DockerHub
+  command: docker pull skadssagar/ecommerce-app-backend:latest
+
+- name: Pull frontend image from DockerHub
+  command: docker pull skadssagar/ecommerce-app-frontend:latest
+
+- name: Run docker compose up
+  command: docker compose up -d
+  args:
+    chdir: /opt/ecommerce

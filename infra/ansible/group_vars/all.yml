@@ -1,0 +1,6 @@
+app_name: devops-ecommerce
+dockerhub_user: skadssagar
+backend_image: "{{ dockerhub_user }}/ecommerce-app-backend:latest"
+frontend_image: "{{ dockerhub_user }}/ecommerce-app-frontend:latest"
+app_port_frontend: 3000
+app_port_backend: 5000
