@@ -53,7 +53,17 @@ pipeline {
 
         stage('Security Scan') {
             steps {
-                echo 'Security scan placeholder'
+                sh '''
+                    cd backend
+                    pip3 install bandit
+                    bandit -r . --exclude ./tests -f txt -o bandit-report.txt || true
+                    cat bandit-report.txt
+                '''
+            }
+            post {
+                always {
+                    archiveArtifacts artifacts: 'backend/bandit-report.txt', allowEmptyArchive: true
+                }
             }
         }
 
