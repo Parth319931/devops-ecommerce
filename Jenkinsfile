@@ -2,9 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKERHUB_USER = 'parthgandhi23'
-        IMAGE_NAME = "${DOCKERHUB_USER}/ecommerce-app"
-        IMAGE_TAG = "${BUILD_NUMBER}"
+        DOCKERHUB_USER = 'skadssagar'
     }
 
     stages {
@@ -22,7 +20,6 @@ pipeline {
                     steps {
                         dir('frontend') {
                             sh 'npm install'
-                            echo 'Frontend dependencies installed.'
                         }
                     }
                 }
@@ -30,7 +27,6 @@ pipeline {
                     steps {
                         dir('backend') {
                             sh 'pip3 install -r requirements.txt'
-                            echo 'Backend dependencies installed.'
                         }
                     }
                 }
@@ -49,7 +45,7 @@ pipeline {
                 }
                 stage('Frontend Tests') {
                     steps {
-                        echo 'Skipping frontend tests for CI stability'
+                        echo 'Skipping frontend tests'
                     }
                 }
             }
@@ -57,7 +53,7 @@ pipeline {
 
         stage('Security Scan') {
             steps {
-                echo 'Security Scan - OWASP Dependency-Check will be configured in Phase 5'
+                echo 'Security scan placeholder'
             }
         }
 
@@ -70,14 +66,8 @@ pipeline {
                 )]) {
                     sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
 
-                    sh "docker build -f Dockerfile.backend -t ${DOCKERHUB_USER}/ecommerce-app-backend:${BUILD_NUMBER} ."
-                    sh "docker build -f Dockerfile.frontend -t ${DOCKERHUB_USER}/ecommerce-app-frontend:${BUILD_NUMBER} ."
-
-                    sh "docker push ${DOCKERHUB_USER}/ecommerce-app-backend:${BUILD_NUMBER}"
-                    sh "docker push ${DOCKERHUB_USER}/ecommerce-app-frontend:${BUILD_NUMBER}"
-
-                    sh "docker tag ${DOCKERHUB_USER}/ecommerce-app-backend:${BUILD_NUMBER} ${DOCKERHUB_USER}/ecommerce-app-backend:latest"
-                    sh "docker tag ${DOCKERHUB_USER}/ecommerce-app-frontend:${BUILD_NUMBER} ${DOCKERHUB_USER}/ecommerce-app-frontend:latest"
+                    sh "docker build -f Dockerfile.backend -t ${DOCKERHUB_USER}/ecommerce-app-backend:latest ."
+                    sh "docker build -f Dockerfile.frontend -t ${DOCKERHUB_USER}/ecommerce-app-frontend:latest ."
 
                     sh "docker push ${DOCKERHUB_USER}/ecommerce-app-backend:latest"
                     sh "docker push ${DOCKERHUB_USER}/ecommerce-app-frontend:latest"
@@ -87,21 +77,55 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                echo 'Deploy stage - will be activated in Phase 3 (Terraform + Ansible)'
+                withCredentials([
+                    string(credentialsId: 'aws-access-key-id', variable: 'AWS_ACCESS_KEY_ID'),
+                    string(credentialsId: 'aws-secret-access-key', variable: 'AWS_SECRET_ACCESS_KEY')
+                ]) {
+
+                    sh '''
+                        cd infra/terraform
+                        export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+                        export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+                        terraform init
+                        terraform apply -auto-approve
+                        terraform output -raw public_ip > ../ansible/ec2_ip.txt
+                    '''
+
+                    sh '''
+                        EC2_IP=$(cat infra/ansible/ec2_ip.txt)
+
+                        echo "[app_servers]" > infra/ansible/inventory.ini
+                        echo "ecommerce-server ansible_host=${EC2_IP} ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/ecommerce-key.pem ansible_ssh_common_args='-o StrictHostKeyChecking=no'" >> infra/ansible/inventory.ini
+
+                        cd infra/ansible
+                        ansible-playbook -i inventory.ini site.yml
+                    '''
+                }
+            }
+        }
+
+        stage('Smoke Test') {
+            steps {
+                sh '''
+                    EC2_IP=$(cat infra/ansible/ec2_ip.txt)
+                    sleep 10
+                    STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://${EC2_IP}:5000/health)
+                    echo "Health check returned: $STATUS"
+                    [ "$STATUS" = "200" ] && echo "PASS" || exit 1
+                '''
             }
         }
     }
 
     post {
         always {
-            archiveArtifacts artifacts: 'reports/**/*', allowEmptyArchive: true
             echo 'Pipeline completed.'
         }
         success {
             echo 'All stages passed!'
         }
         failure {
-            echo 'Pipeline failed. Check logs above.'
+            echo 'Pipeline failed.'
         }
     }
 }
