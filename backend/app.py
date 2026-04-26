@@ -35,6 +35,12 @@ def search_products():
         min_rating = float(request.args.get('min_rating', 0))
         category = request.args.get('category', '')
 
+        # Sanitize query — remove special characters
+        import re
+        query = re.sub(r"[^\w\s]", "", query)
+        brand = re.sub(r"[^\w\s]", "", brand)
+        category = re.sub(r"[^\w\s]", "", category)
+
         filter_query = {
             'price': {'$gte': min_price, '$lte': max_price},
             'rating': {'$gte': min_rating}
