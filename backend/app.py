@@ -27,33 +27,34 @@ def get_products():
 
 @app.route('/api/search', methods=['GET'])
 def search_products():
-    REQUEST_COUNT.inc()
-    query = request.args.get('q', '')
-    min_price = float(request.args.get('min_price', 0))
-    max_price = float(request.args.get('max_price', 999999))
-    brand = request.args.get('brand', '')
-    min_rating = float(request.args.get('min_rating', 0))
-    category = request.args.get('category', '')
+    try:
+        query = request.args.get('q', '')
+        min_price = float(request.args.get('min_price', 0))
+        max_price = float(request.args.get('max_price', 999999))
+        brand = request.args.get('brand', '')
+        min_rating = float(request.args.get('min_rating', 0))
+        category = request.args.get('category', '')
 
-    filter_query = {
-        'price': {'$gte': min_price, '$lte': max_price},
-        'rating': {'$gte': min_rating}
-    }
+        filter_query = {
+            'price': {'$gte': min_price, '$lte': max_price},
+            'rating': {'$gte': min_rating}
+        }
 
-    if query:
-        filter_query['$or'] = [
-            {'name': {'$regex': query, '$options': 'i'}},
-            {'description': {'$regex': query, '$options': 'i'}}
-        ]
+        if query:
+            filter_query['$or'] = [
+                {'name': {'$regex': query, '$options': 'i'}},
+                {'description': {'$regex': query, '$options': 'i'}}
+            ]
+        if brand:
+            filter_query['brand'] = {'$regex': brand, '$options': 'i'}
+        if category:
+            filter_query['category'] = {'$regex': category, '$options': 'i'}
 
-    if brand:
-        filter_query['brand'] = {'$regex': brand, '$options': 'i'}
+        products = list(mongo.db.products.find(filter_query, {'_id': 0}))
+        return jsonify(products)
 
-    if category:
-        filter_query['category'] = {'$regex': category, '$options': 'i'}
-
-    products = list(mongo.db.products.find(filter_query, {'_id': 0}))
-    return jsonify(products)
+    except Exception as e:
+        return jsonify({'error': 'Invalid request', 'message': str(e)}), 400
 
 @app.route('/api/compare', methods=['GET'])
 def compare_products():
