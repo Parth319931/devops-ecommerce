@@ -89,24 +89,11 @@ pipeline {
                     string(credentialsId: 'aws-access-key-id', variable: 'AWS_ACCESS_KEY_ID'),
                     string(credentialsId: 'aws-secret-access-key', variable: 'AWS_SECRET_ACCESS_KEY')
                 ]) {
-
                     sh '''
-                        cd infra/terraform
-                        export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
-                        export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
-                        terraform init
-                        terraform apply -auto-approve
-                        terraform output -raw public_ip > ../ansible/ec2_ip.txt
-                    '''
-
-                    sh '''
-                        EC2_IP=$(cat infra/ansible/ec2_ip.txt)
-
-                        echo "[app_servers]" > infra/ansible/inventory.ini
-                        echo "ecommerce-server ansible_host=${EC2_IP} ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/ecommerce-key.pem ansible_ssh_common_args='-o StrictHostKeyChecking=no'" >> infra/ansible/inventory.ini
-
                         cd infra/ansible
-                        ansible-playbook -i inventory.ini site.yml
+                        ansible-playbook -i inventory.ini site.yml \
+                            --private-key ~/.ssh/ecommerce-key.pem \
+                            -u ubuntu
                     '''
                 }
             }
