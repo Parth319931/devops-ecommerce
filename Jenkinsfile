@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKERHUB_USER = 'skadssagar'
+        DOCKERHUB_USER = 'parthgandhi23'
     }
 
     stages {
@@ -56,14 +56,12 @@ pipeline {
                 sh '''
                     cd backend
                     pip3 install bandit
+
+                    export PATH=$PATH:/var/lib/jenkins/.local/bin
+
                     bandit -r . --exclude ./tests -f txt -o bandit-report.txt || true
-                    cat bandit-report.txt
+                    cat bandit-report.txt || true
                 '''
-            }
-            post {
-                always {
-                    archiveArtifacts artifacts: 'backend/bandit-report.txt', allowEmptyArchive: true
-                }
             }
         }
 
