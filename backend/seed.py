@@ -1,7 +1,7 @@
 from pymongo import MongoClient
 import json
 
-client = MongoClient("mongodb://localhost:27017/")
+client = MongoClient("mongodb://mongodb:27017/")
 db = client["ecommerce"]
 db.products.drop()
 
