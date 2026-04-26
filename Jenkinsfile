@@ -3,6 +3,8 @@ pipeline {
 
     environment {
         DOCKERHUB_USER = 'parthgandhi23'
+        IMAGE_NAME_BACKEND = "${DOCKERHUB_USER}/ecommerce-app-backend"
+        IMAGE_NAME_FRONTEND = "${DOCKERHUB_USER}/ecommerce-app-frontend"
     }
 
     stages {
@@ -20,6 +22,7 @@ pipeline {
                     steps {
                         dir('frontend') {
                             sh 'npm install'
+                            echo 'Frontend dependencies installed.'
                         }
                     }
                 }
@@ -27,6 +30,7 @@ pipeline {
                     steps {
                         dir('backend') {
                             sh 'pip3 install -r requirements.txt'
+                            echo 'Backend dependencies installed.'
                         }
                     }
                 }
@@ -56,11 +60,9 @@ pipeline {
                 sh '''
                     cd backend
                     pip3 install bandit
-
-                    export PATH=$PATH:/var/lib/jenkins/.local/bin
-
+                    export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin:/var/lib/jenkins/.local/bin
                     bandit -r . --exclude ./tests -f txt -o bandit-report.txt || true
-                    cat bandit-report.txt || true
+                    cat bandit-report.txt
                 '''
             }
         }
@@ -73,12 +75,10 @@ pipeline {
                     passwordVariable: 'DOCKER_PASS'
                 )]) {
                     sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
-
-                    sh "docker build -f Dockerfile.backend -t ${DOCKERHUB_USER}/ecommerce-app-backend:latest ."
-                    sh "docker build -f Dockerfile.frontend -t ${DOCKERHUB_USER}/ecommerce-app-frontend:latest ."
-
-                    sh "docker push ${DOCKERHUB_USER}/ecommerce-app-backend:latest"
-                    sh "docker push ${DOCKERHUB_USER}/ecommerce-app-frontend:latest"
+                    sh "docker build -f Dockerfile.backend -t ${IMAGE_NAME_BACKEND}:latest ."
+                    sh "docker build -f Dockerfile.frontend -t ${IMAGE_NAME_FRONTEND}:latest ."
+                    sh "docker push ${IMAGE_NAME_BACKEND}:latest"
+                    sh "docker push ${IMAGE_NAME_FRONTEND}:latest"
                 }
             }
         }
@@ -92,7 +92,7 @@ pipeline {
                     sh '''
                         cd infra/ansible
                         ansible-playbook -i inventory.ini site.yml \
-                            --private-key ~/.ssh/ecommerce-key.pem \
+                            --private-key /var/lib/jenkins/.ssh/ecommerce-key.pem \
                             -u ubuntu
                     '''
                 }
@@ -100,25 +100,27 @@ pipeline {
         }
 
         stage('Smoke Test') {
-    		steps {
-        		sh '''
-            		echo "Running smoke test against EC2..."
-            		sleep 15
-            		curl -f http://13.203.238.243:5000/health || echo "Health check done"
-            		echo "Smoke test completed"
-        		'''
-    		}
-	}
+            steps {
+                sh '''
+                    echo "Running smoke test against EC2..."
+                    sleep 10
+                    curl -f http://13.203.238.243:5000/health || echo "Health check done"
+                    echo "Smoke test completed"
+                '''
+            }
+        }
+
+    }
 
     post {
         always {
             echo 'Pipeline completed.'
         }
         success {
-            echo 'All stages passed!'
+            echo 'All stages passed! Application deployed successfully!'
         }
         failure {
-            echo 'Pipeline failed.'
+            echo 'Pipeline failed. Check logs above.'
         }
     }
 }
