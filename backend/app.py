@@ -72,7 +72,7 @@ def compare_products():
 @app.route('/health', methods=['GET'])
 def health():
     REQUEST_COUNT.inc()
-    return jsonify({'status': 'healthy', 'version': 'v2.0', 'demo': 'live'})
+    return jsonify({'status': 'healthy'})
 
 # ---------------- RUN ---------------- #
 
